@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+  
+  
+  <entry>
+    <title>filebeat笔记</title>
+    <link href="/2023/06/07/filebeat/"/>
+    <url>/2023/06/07/filebeat/</url>
+    
+    <content type="html"><![CDATA[<p><a href="https://zhuanlan.zhihu.com/p/141439013">https://zhuanlan.zhihu.com/p/141439013</a></p><p><a href="https://blog.csdn.net/zyxwvuuvwxyz/article/details/108831962">https://blog.csdn.net/zyxwvuuvwxyz/article/details/108831962</a></p><h3 id="1、概要"><a href="#1、概要" class="headerlink" title="1、概要"></a>1、概要</h3><ul><li><p>Filebeat 是使用 Golang 实现的轻量型日志采集器，也是 Elasticsearch stack 里面的一员。本质上是一个 agent ，可以安装在各个节点上，根据配置读取对应位置的日志，并上报到相应的地方去。</p></li><li><p>logstash是可以日志采集，但是资源消耗比较大，其主要功能是日志的过滤以及格式化的输出，也就是独立作为日志格式化输出的。<strong>使用filebeat是代替其采集功能，消耗的资源小，哪台机器需要日志采集就部署filebeat。</strong></p></li><li><p>Filebeat 的可靠性很强，可以保证日志<code>At least once</code>的上报，同时也考虑了日志搜集中的各类问题，例如日志断点续读、文件名更改、日志 Truncated 等。</p></li><li><p>Filebeat 并不依赖于 ElasticSearch，可以单独存在。我们可以单独使用Filebeat进行日志的上报和搜集。<strong>filebeat 内置了常用的 Output 组件, 例如 kafka、ElasticSearch、redis 等，</strong>出于调试考虑，也可以输出到 console 和 file 。我们可以利用现有的 Output 组件，将日志进行上报。</p></li><li><p>当然，我们也可以自定义 Output 组件，让 Filebeat 将日志转发到我们想要的地方。</p></li><li><p>filebeat 其实是 elastic&#x2F;beats 的一员，除了 filebeat 外，还有 HeartBeat、PacketBeat。这些 beat 的实现都是基于 libbeat 框架。</p></li></ul><h3 id="2、工作原理"><a href="#2、工作原理" class="headerlink" title="2、工作原理"></a>2、工作原理</h3><ul><li><p>Filebeat 由两个主要组件组成：<code>harvester</code> 和 <code>prospector</code>。</p></li><li><p>采集器 <code>harvester</code> 的主要职责是读取<strong>单个文件</strong>的内容。读取每个文件，并将内容发送到 the output。 每个文件启动一个 harvester，harvester 负责打开和关闭文件，这意味着在运行时文件描述符保持打开状态。如果文件在读取时被删除或重命名，Filebeat 将继续读取文件。</p></li><li><p>查找器 <code>prospector</code> 的主要职责是管理 harvester 并找到所有要读取的文件来源。如果输入类型为日志，则查找器将查找路径匹配的所有文件，并为每个文件启动一个 harvester。每个 prospector 都在自己的 Go 协程中运行。</p></li><li><p><em><strong>注：Filebeat prospector只能读取本地文件， 没有功能可以连接到远程主机来读取存储的文件或日志。</strong></em></p></li><li><p>由以上两个组件一起工作来读取文件（tail file）并将事件数据发送到您指定的输出。</p></li><li><p>官方架构图</p><img src="/Users/mlamp/Desktop/截屏/other/企业微信20220419-171706@2x.png" style="zoom:50%;" /></li><li><p><strong>其工作流程如下：</strong></p><ul><li>当启动 Filebeat 程序时，它会启动一个或多个查找器去检测指定的日志目录或文件。对于查找器 prospector 所在的每个日志文件，Filebeat 会启动收集进程 harvester。 每个 harvester 都会为新内容读取单个日志文件，并将新日志数据发送到后台处理程序，后台处理程序会集合这些事件，最后发送集合的数据到 output 指定的目的地。</li></ul></li><li><p>除了图中提到的各个组件，整个 filebeat 主要包含以下重要组件：</p><ul><li><code>Crawler</code>：负责管理和启动各个 Input</li><li><code>Input</code>：负责管理和解析输入源的信息，以及为每个文件启动 Harvester。可由配置文件指定输入源信息。</li><li><code>Harvester</code>: Harvester 负责读取一个文件的信息。</li><li><code>Pipeline</code>: 负责管理缓存、Harvester 的信息写入以及 Output 的消费等，是 Filebeat 最核心的组件。</li><li><code>Output</code>: 输出源，可由配置文件指定输出源信息。</li><li><code>Registrar</code>：管理记录每个文件处理状态，包括偏移量、文件名等信息。当 Filebeat 启动时，会从 Registrar 恢复文件处理状态。</li><li><strong>filebeat 的整个生命周期，几个组件共同协作，完成了日志从采集到上报的整个过程。</strong></li></ul></li></ul><h3 id="3、filebeat实战"><a href="#3、filebeat实战" class="headerlink" title="3、filebeat实战"></a>3、filebeat实战</h3><p><a href="https://blog.csdn.net/qq_34556414/article/details/112216058">https://blog.csdn.net/qq_34556414/article/details/112216058</a></p><h3 id="4、日志采集流程"><a href="#4、日志采集流程" class="headerlink" title="4、日志采集流程"></a>4、日志采集流程</h3>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="/2023/06/07/hello-world/"/>
+    <url>/2023/06/07/hello-world/</url>
+    
+    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo new <span class="hljs-string">&quot;My New Post1111&quot;</span><br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo server<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo generate<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo deploy<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  
+</search>
